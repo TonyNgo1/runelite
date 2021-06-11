@@ -431,7 +431,7 @@ public final class SpriteID
 	public static final int SPELL_FIRE_SURGE_DISABLED = 415;
 	/* Unmapped: 416, 417, 418 */
 	public static final int UNKNOWN_STANCE_ICON_1 = 419;
-	public static final int UNKNOWN_STANCE_ICON_2 = 320;
+	public static final int UNKNOWN_STANCE_ICON_2 = 420;
 	public static final int UNKNOWN_STANCE_ICON_3 = 421;
 	public static final int MINIMAP_DESTINATION_FLAG = 422;
 	public static final int CHATBOX_BADGE_CROWN_PLAYER_MODERATOR = 423;
@@ -977,28 +977,19 @@ public final class SpriteID
 	public static final int STASH_UNITS_SLANTED_TAB_EDGE_LEFT_HOVERED = 1001;
 	public static final int STASH_UNITS_SLANTED_TAB_MIDDLE_HOVERED = 1002;
 	public static final int STASH_UNITS_SLANTED_TAB_EDGE_RIGHT_HOVERED = 1003;
-	public static final int FRIENDS_CHAT_RANK_SMILEY_FRIEND = 1004;
-	public static final int FRIENDS_CHAT_RANK_CROWN_JAGEX_MODERATOR = 1005;
-	public static final int FRIENDS_CHAT_RANK_KEY_CHANNEL_OWNER = 1006;
-	public static final int FRIENDS_CHAT_RANK_GOLD_STAR_GENERAL = 1007;
-	public static final int FRIENDS_CHAT_RANK_SILVER_STAR_CAPTAIN = 1008;
-	public static final int FRIENDS_CHAT_RANK_BRONZE_STAR_LIEUTENANT = 1009;
-	public static final int FRIENDS_CHAT_RANK_TRIPLE_CHEVRON_SERGEANT = 1010;
-	public static final int FRIENDS_CHAT_RANK_DOUBLE_CHEVRON_CORPORAL = 1011;
-	public static final int FRIENDS_CHAT_RANK_SINGLE_CHEVRON_RECRUIT = 1012;
 	public static final int UNKNOWN_BUTTON_METAL_CORNERS = 1013;
 	public static final int UNKNOWN_BUTTON_METAL_CORNERS_HOVERED = 1014;
 	public static final int UNKNOWN_SLANTED_TAB_LONG = 1015;
 	public static final int UNKNOWN_SLANTED_TAB_LONG_HOVERED = 1016;
 	public static final int CHATBOX = 1017;
 	public static final int CHATBOX_BUTTONS_BACKGROUND_STONES = 1018;
-	public static final int CHATBOX_BUTTON = 1019;
-	public static final int CHATBOX_BUTTON_HOVERED = 1020;
-	public static final int CHATBOX_BUTTON_NEW_MESSAGES = 1021;
-	public static final int CHATBOX_BUTTON_SELECTED = 1022;
-	public static final int CHATBOX_BUTTON_SELECTED_HOVERED = 1023;
-	public static final int CHATBOX_REPORT_BUTTON = 1024;
-	public static final int CHATBOX_REPORT_BUTTON_HOVERED = 1025;
+	public static final int CHATBOX_BUTTON = 3051;
+	public static final int CHATBOX_BUTTON_HOVERED = 3052;
+	public static final int CHATBOX_BUTTON_NEW_MESSAGES = 3055;
+	public static final int CHATBOX_BUTTON_SELECTED = 3053;
+	public static final int CHATBOX_BUTTON_SELECTED_HOVERED = 3054;
+	public static final int CHATBOX_REPORT_BUTTON = 3057;
+	public static final int CHATBOX_REPORT_BUTTON_HOVERED = 3058;
 	public static final int TAB_STONE_TOP_LEFT_SELECTED = 1026;
 	public static final int TAB_STONE_TOP_RIGHT_SELECTED = 1027;
 	public static final int TAB_STONE_BOTTOM_LEFT_SELECTED = 1028;
@@ -1042,8 +1033,8 @@ public final class SpriteID
 	public static final int MINIMAP_ORB_PRAYER_ACTIVATED = 1066;
 	public static final int MINIMAP_ORB_HITPOINTS_ICON = 1067;
 	public static final int MINIMAP_ORB_PRAYER_ICON = 1068;
+	public static final int MINIMAP_ORB_WALK_ICON = 1069;
 	public static final int MINIMAP_ORB_RUN_ICON = 1070;
-	public static final int MINIMAP_ORB_RUN_ICON_ACTIVATED = 1070;
 	public static final int MINIMAP_ORB_FRAME = 1071;
 	public static final int MINIMAP_ORB_FRAME_HOVERED = 1072;
 	public static final int OPTIONS_CAMERA = 1073;
@@ -1074,7 +1065,6 @@ public final class SpriteID
 	public static final int ABLEGAMERS_PROMO_BANNER = 1098;
 	public static final int YOUNGMINDS_PROMO_BANNER = 1099;
 	public static final int DONATEGAMES_PROMO_BANNER = 1100;
-	public static final int UNKNOWN_GREEN_FRIEND_ICON = 1101;
 	public static final int MINIMAP_ORB_HITPOINTS_VENOM = 1102;
 	public static final int PAYPAL_DONATE_BUTTON = 1103;
 	public static final int GAMEBLAST15_PROMO_BANNER = 1104;
@@ -1589,6 +1579,20 @@ public final class SpriteID
 	public static final int HEALTHBAR_DEFAULT_BACK_140PX = 2189;
 	public static final int HEALTHBAR_DEFAULT_FRONT_160PX = 2190;
 	public static final int HEALTHBAR_DEFAULT_BACK_160PX = 2191;
+	public static final int TAB_CLAN_CHAT = 2307;
 	public static final int WIKI_DESELECTED = 2420;
 	public static final int WIKI_SELECTED = 2421;
+	public static final int FRIENDS_CHAT_RANK_SMILEY_FRIEND = 2825;
+	public static final int FRIENDS_CHAT_RANK_CROWN_JAGEX_MODERATOR = 2826;
+	public static final int FRIENDS_CHAT_RANK_KEY_CHANNEL_OWNER = 2827;
+	public static final int FRIENDS_CHAT_RANK_GOLD_STAR_GENERAL = 2828;
+	public static final int FRIENDS_CHAT_RANK_SILVER_STAR_CAPTAIN = 2829;
+	public static final int FRIENDS_CHAT_RANK_BRONZE_STAR_LIEUTENANT = 2830;
+	public static final int FRIENDS_CHAT_RANK_TRIPLE_CHEVRON_SERGEANT = 2831;
+	public static final int FRIENDS_CHAT_RANK_DOUBLE_CHEVRON_CORPORAL = 2832;
+	public static final int FRIENDS_CHAT_RANK_SINGLE_CHEVRON_RECRUIT = 2833;
+
+	public static final int SETTINGS_SLIDER_HANDLE_BLUE = 2858;
+	public static final int SETTINGS_SLIDER_HANDLE_RED = 2859;
+	public static final int SETTINGS_SLIDER_HANDLE_GREEN = 2860;
 }

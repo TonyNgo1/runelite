@@ -134,6 +134,39 @@ public interface MenuEntrySwapperConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "swapHerbs",
+		name = "Clean",
+		description = "Swap Clean with Use on Herbs",
+		section = itemSection
+	)
+	default boolean swapHerbs()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "swapBattlestaves",
+		name = "Battlestaff",
+		description = "Swap Wield with Use on Battlestaves without orbs",
+		section = itemSection
+	)
+	default boolean swapBattlestaves()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "swapPrayerBook",
+		name = "Recite-Prayer",
+		description = "Swap Read with Recite-prayer on the Prayer Book from The Great Brain Robbery quest",
+		section = itemSection
+	)
+	default boolean swapPrayerBook()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "swapContract",
 		name = "Contract",
 		description = "Swap Talk-to with Contract on Guildmaster Jane",
@@ -255,6 +288,17 @@ public interface MenuEntrySwapperConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "swapBait",
+		name = "Bait",
+		description = "Swap Lure, Small Net with Bait on Fishing spot",
+		section = objectSection
+	)
+	default boolean swapBait()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "swapHelp",
 		name = "Help",
 		description = "Swap Talk-to with Help on Arceuus library customers",
@@ -310,6 +354,17 @@ public interface MenuEntrySwapperConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "swapPortalNexus",
+		name = "Portal Nexus",
+		description =  "Swap Teleport options with Teleport Menu on the Portal Nexus",
+		section = objectSection
+	)
+	default boolean swapPortalNexus()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "swapPrivate",
 		name = "Private",
 		description = "Swap Shared with Private on the Chambers of Xeric storage units.",
@@ -360,6 +415,17 @@ public interface MenuEntrySwapperConfig extends Config
 		section = itemSection
 	)
 	default boolean swapTeleportItem()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "swapTeleToPoh",
+		name = "Tele to POH",
+		description = "Swap Wear with Tele to POH on the construction cape",
+		section = itemSection
+	)
+	default boolean swapTeleToPoh()
 	{
 		return false;
 	}
@@ -559,6 +625,61 @@ public interface MenuEntrySwapperConfig extends Config
 		section = uiSection
 	)
 	default boolean swapTan()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "swapCollectMiscellania",
+		name = "Miscellania",
+		description = "Swap Talk-to with Collect for Advisor Ghrim",
+		section = npcSection
+	)
+	default boolean swapCollectMiscellania()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "swapDepositItems",
+		name = "Deposit Items",
+		description = "Swap Talk-to with Deposit-items",
+		section = npcSection
+	)
+	default boolean swapDepositItems()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "swapRockCake",
+		name = "Dwarven rock cake",
+		description = "Swap Eat with Guzzle on the Dwarven rock cake",
+		section = itemSection
+	)
+	default boolean swapRockCake()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "swapRowboatDive",
+		name = "Fossil Island Rowboat Dive",
+		description = "Swap Travel with Dive on the rowboat found on the small island north-east of Fossil Island",
+		section = objectSection
+	)
+	default boolean swapRowboatDive()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "swapTemporossLeave",
+		name = "Tempoross Leave",
+		description = "Swap Talk-to with Leave after subduing Tempoross",
+		section = npcSection
+	)
+	default boolean swapTemporossLeave()
 	{
 		return false;
 	}

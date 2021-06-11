@@ -39,6 +39,7 @@ import net.runelite.api.Point;
 import net.runelite.api.RenderOverview;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetID;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.input.MouseManager;
 import net.runelite.client.ui.FontManager;
@@ -55,6 +56,7 @@ public class WorldMapOverlay extends Overlay
 	private static final int TOOLTIP_OFFSET_WIDTH = 5;
 	private static final int TOOLTIP_PADDING_HEIGHT = 1;
 	private static final int TOOLTIP_PADDING_WIDTH = 2;
+	private static final int TOOLTIP_TEXT_OFFSET_HEIGHT = -2;
 
 	private static final Splitter TOOLTIP_SPLITTER = Splitter.on("<br>").trimResults().omitEmptyStrings();
 
@@ -72,7 +74,8 @@ public class WorldMapOverlay extends Overlay
 		this.worldMapPointManager = worldMapPointManager;
 		setPosition(OverlayPosition.DYNAMIC);
 		setPriority(OverlayPriority.HIGHEST);
-		setLayer(OverlayLayer.ABOVE_MAP);
+		setLayer(OverlayLayer.MANUAL);
+		drawAfterInterface(WidgetID.WORLD_MAP_GROUP_ID);
 		mouseManager.registerMouseListener(worldMapOverlayMouseListener);
 	}
 
@@ -128,7 +131,24 @@ public class WorldMapOverlay extends Overlay
 
 				if (worldPoint.isSnapToEdge())
 				{
-					if (worldMapRectangle.contains(drawPoint.getX(), drawPoint.getY()))
+					// Get a smaller rect for edge-snapped icons so they display correctly at the edge
+					final Rectangle snappedRect = widget.getBounds();
+					snappedRect.grow(-image.getWidth() / 2, -image.getHeight() / 2);
+
+					final Rectangle unsnappedRect = new Rectangle(snappedRect);
+					if (worldPoint.getImagePoint() != null)
+					{
+						int dx = worldPoint.getImagePoint().getX() - (image.getWidth() / 2);
+						int dy = worldPoint.getImagePoint().getY() - (image.getHeight() / 2);
+						unsnappedRect.translate(dx, dy);
+					}
+					// Make the unsnap rect slightly smaller so a smaller snapped image doesn't cause a freak out
+					if (worldPoint.isCurrentlyEdgeSnapped())
+					{
+						unsnappedRect.grow(-image.getWidth(), -image.getHeight());
+					}
+
+					if (unsnappedRect.contains(drawPoint.getX(), drawPoint.getY()))
 					{
 						if (worldPoint.isCurrentlyEdgeSnapped())
 						{
@@ -138,7 +158,7 @@ public class WorldMapOverlay extends Overlay
 					}
 					else
 					{
-						drawPoint = clipToRectangle(drawPoint, worldMapRectangle);
+						drawPoint = clipToRectangle(drawPoint, snappedRect);
 						if (!worldPoint.isCurrentlyEdgeSnapped())
 						{
 							worldPoint.setCurrentlyEdgeSnapped(true);
@@ -290,7 +310,7 @@ public class WorldMapOverlay extends Overlay
 		graphics.setColor(JagexColors.TOOLTIP_TEXT);
 		for (int i = 0; i < rows.size(); i++)
 		{
-			graphics.drawString(rows.get(i), drawPoint.getX(), drawPoint.getY() + (i + 1) * height);
+			graphics.drawString(rows.get(i), drawPoint.getX(), drawPoint.getY() + TOOLTIP_TEXT_OFFSET_HEIGHT + (i + 1) * height);
 		}
 	}
 

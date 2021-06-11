@@ -27,6 +27,7 @@ package net.runelite.client.plugins.screenshot;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provides;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -34,6 +35,7 @@ import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -56,6 +58,7 @@ import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ScriptCallbackEvent;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetID;
 import static net.runelite.api.widgets.WidgetID.BARROWS_REWARD_GROUP_ID;
 import static net.runelite.api.widgets.WidgetID.CHAMBERS_OF_XERIC_REWARD_GROUP_ID;
 import static net.runelite.api.widgets.WidgetID.CLUE_SCROLL_REWARD_GROUP_ID;
@@ -65,7 +68,6 @@ import static net.runelite.api.widgets.WidgetID.LEVEL_UP_GROUP_ID;
 import static net.runelite.api.widgets.WidgetID.QUEST_COMPLETED_GROUP_ID;
 import static net.runelite.api.widgets.WidgetID.THEATRE_OF_BLOOD_REWARD_GROUP_ID;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.client.Notifier;
 import static net.runelite.client.RuneLite.SCREENSHOT_DIR;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -93,6 +95,7 @@ import net.runelite.client.util.Text;
 @Slf4j
 public class ScreenshotPlugin extends Plugin
 {
+	private static final String COLLECTION_LOG_TEXT = "New item added to your collection log: ";
 	private static final String CHEST_LOOTED_MESSAGE = "You find some treasure in the chest!";
 	private static final Map<Integer, String> CHEST_LOOT_EVENTS = ImmutableMap.of(12127, "The Gauntlet");
 	private static final int GAUNTLET_REGION = 7512;
@@ -100,7 +103,7 @@ public class ScreenshotPlugin extends Plugin
 	private static final Pattern NUMBER_PATTERN = Pattern.compile("([0-9]+)");
 	private static final Pattern LEVEL_UP_PATTERN = Pattern.compile(".*Your ([a-zA-Z]+) (?:level is|are)? now (\\d+)\\.");
 	private static final Pattern BOSSKILL_MESSAGE_PATTERN = Pattern.compile("Your (.+) kill count is: <col=ff0000>(\\d+)</col>.");
-	private static final Pattern VALUABLE_DROP_PATTERN = Pattern.compile(".*Valuable drop: ([^<>]+)(?:</col>)?");
+	private static final Pattern VALUABLE_DROP_PATTERN = Pattern.compile(".*Valuable drop: ([^<>]+?\\(((?:\\d+,?)+) coins\\))(?:</col>)?");
 	private static final Pattern UNTRADEABLE_DROP_PATTERN = Pattern.compile(".*Untradeable drop: ([^<>]+)(?:</col>)?");
 	private static final Pattern DUEL_END_PATTERN = Pattern.compile("You have now (won|lost) ([0-9]+) duels?\\.");
 	private static final Pattern QUEST_PATTERN_1 = Pattern.compile(".+?ve\\.*? (?<verb>been|rebuilt|.+?ed)? ?(?:the )?'?(?<quest>.+?)'?(?: [Qq]uest)?[!.]?$");
@@ -110,6 +113,11 @@ public class ScreenshotPlugin extends Plugin
 	private static final ImmutableList<String> PET_MESSAGES = ImmutableList.of("You have a funny feeling like you're being followed",
 		"You feel something weird sneaking into your backpack",
 		"You have a funny feeling like you would have been followed");
+	private static final Pattern BA_HIGH_GAMBLE_REWARD_PATTERN = Pattern.compile("(?<reward>.+)!<br>High level gamble count: <col=7f0000>(?<gambleCount>.+)</col>");
+	private static final Set<Integer> REPORT_BUTTON_TLIS = ImmutableSet.of(
+		WidgetID.FIXED_VIEWPORT_GROUP_ID,
+		WidgetID.RESIZABLE_VIEWPORT_OLD_SCHOOL_BOX_GROUP_ID,
+		WidgetID.RESIZABLE_VIEWPORT_BOTTOM_LINE_GROUP_ID);
 
 	private String clueType;
 	private Integer clueNumber;
@@ -132,9 +140,6 @@ public class ScreenshotPlugin extends Plugin
 
 	@Inject
 	private ScreenshotOverlay screenshotOverlay;
-
-	@Inject
-	private Notifier notifier;
 
 	@Inject
 	private Client client;
@@ -189,7 +194,7 @@ public class ScreenshotPlugin extends Plugin
 		SCREENSHOT_DIR.mkdirs();
 		keyManager.registerKeyListener(hotkeyListener);
 
-		final BufferedImage iconImage = ImageUtil.getResourceStreamFromClass(getClass(), "screenshot.png");
+		final BufferedImage iconImage = ImageUtil.loadImageResource(getClass(), "screenshot.png");
 
 		titleBarButton = NavigationButton.builder()
 			.tab(false)
@@ -238,8 +243,23 @@ public class ScreenshotPlugin extends Plugin
 		}
 		else if (client.getWidget(WidgetInfo.DIALOG_SPRITE_TEXT) != null)
 		{
-			fileName = parseLevelUpWidget(WidgetInfo.DIALOG_SPRITE_TEXT);
-			screenshotSubDir = "Levels";
+			String text = client.getWidget(WidgetInfo.DIALOG_SPRITE_TEXT).getText();
+			if (Text.removeTags(text).contains("High level gamble"))
+			{
+				if (config.screenshotHighGamble())
+				{
+					fileName = parseBAHighGambleWidget(text);
+					screenshotSubDir = "BA High Gambles";
+				}
+			}
+			else
+			{
+				if (config.screenshotLevels())
+				{
+					fileName = parseLevelUpWidget(WidgetInfo.DIALOG_SPRITE_TEXT);
+					screenshotSubDir = "Levels";
+				}
+			}
 		}
 		else if (client.getWidget(WidgetInfo.QUEST_COMPLETED_NAME_TEXT) != null)
 		{
@@ -378,7 +398,7 @@ public class ScreenshotPlugin extends Plugin
 			takeScreenshot(fileName, "Pets");
 		}
 
-		if (config.screenshotBossKills() )
+		if (config.screenshotBossKills())
 		{
 			Matcher m = BOSSKILL_MESSAGE_PATTERN.matcher(chatMessage);
 			if (m.matches())
@@ -405,9 +425,13 @@ public class ScreenshotPlugin extends Plugin
 			Matcher m = VALUABLE_DROP_PATTERN.matcher(chatMessage);
 			if (m.matches())
 			{
-				String valuableDropName = m.group(1);
-				String fileName = "Valuable drop " + valuableDropName;
-				takeScreenshot(fileName, "Valuable Drops");
+				int valuableDropValue = Integer.parseInt(m.group(2).replaceAll(",", ""));
+				if (valuableDropValue >= config.valuableDropThreshold())
+				{
+					String valuableDropName = m.group(1);
+					String fileName = "Valuable drop " + valuableDropName;
+					takeScreenshot(fileName, "Valuable Drops");
+				}
 			}
 		}
 
@@ -433,6 +457,13 @@ public class ScreenshotPlugin extends Plugin
 				takeScreenshot(fileName, "Duels");
 			}
 		}
+
+		if (config.screenshotCollectionLogEntries() && chatMessage.startsWith(COLLECTION_LOG_TEXT))
+		{
+			String entry = Text.removeTags(chatMessage).substring(COLLECTION_LOG_TEXT.length());
+			String fileName = "Collection log (" + entry + ")";
+			takeScreenshot(fileName, "Collection Log");
+		}
 	}
 
 	@Subscribe
@@ -455,8 +486,13 @@ public class ScreenshotPlugin extends Plugin
 				}
 				break;
 			case LEVEL_UP_GROUP_ID:
-			case DIALOG_SPRITE_GROUP_ID:
 				if (!config.screenshotLevels())
+				{
+					return;
+				}
+				break;
+			case DIALOG_SPRITE_GROUP_ID:
+				if (!(config.screenshotLevels() || config.screenshotHighGamble()))
 				{
 					return;
 				}
@@ -627,11 +663,31 @@ public class ScreenshotPlugin extends Plugin
 	}
 
 	/**
+	 * Parses the Barbarian Assault high gamble reward dialog text into a shortened string for filename usage.
+	 *
+	 * @param text The {@link Widget#getText() text} of the {@link WidgetInfo#DIALOG_SPRITE_TEXT} widget.
+	 * @return Shortened string in the format "High Gamble(100)"
+	 */
+	@VisibleForTesting
+	static String parseBAHighGambleWidget(final String text)
+	{
+		final Matcher highGambleMatch = BA_HIGH_GAMBLE_REWARD_PATTERN.matcher(text);
+		if (highGambleMatch.find())
+		{
+			String gambleCount = highGambleMatch.group("gambleCount");
+			return String.format("High Gamble(%s)", gambleCount);
+		}
+
+		return "High Gamble(count not found)";
+	}
+
+
+	/**
 	 * Saves a screenshot of the client window to the screenshot folder as a PNG,
 	 * and optionally uploads it to an image-hosting service.
 	 *
-	 * @param fileName    Filename to use, without file extension.
-	 * @param subDir      Subdirectory to store the captured screenshot in.
+	 * @param fileName Filename to use, without file extension.
+	 * @param subDir   Subdirectory to store the captured screenshot in.
 	 */
 	private void takeScreenshot(String fileName, String subDir)
 	{
@@ -648,7 +704,7 @@ public class ScreenshotPlugin extends Plugin
 			executor.submit(() -> takeScreenshot(fileName, subDir, img));
 		};
 
-		if (config.displayDate())
+		if (config.displayDate() && REPORT_BUTTON_TLIS.contains(client.getTopLevelInterfaceId()))
 		{
 			screenshotOverlay.queueForTimestamp(imageCallback);
 		}

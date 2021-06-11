@@ -48,6 +48,7 @@ import java.awt.image.BufferedImage;
 import java.time.Duration;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.swing.BoxLayout;
@@ -70,7 +71,6 @@ import net.runelite.api.Point;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.client.RuneLiteProperties;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.ExpandResizeType;
@@ -108,9 +108,7 @@ public class ClientUI
 	private static final String CONFIG_CLIENT_BOUNDS = "clientBounds";
 	private static final String CONFIG_CLIENT_MAXIMIZED = "clientMaximized";
 	private static final String CONFIG_CLIENT_SIDEBAR_CLOSED = "clientSidebarClosed";
-	private static final int CLIENT_WELL_HIDDEN_MARGIN = 160;
-	private static final int CLIENT_WELL_HIDDEN_MARGIN_TOP = 10;
-	public static final BufferedImage ICON = ImageUtil.getResourceStreamFromClass(ClientUI.class, "/runelite.png");
+	public static final BufferedImage ICON = ImageUtil.loadImageResource(ClientUI.class, "/runelite.png");
 
 	@Getter
 	private TrayIcon trayIcon;
@@ -122,6 +120,8 @@ public class ClientUI
 	private final ConfigManager configManager;
 	private final Provider<ClientThread> clientThreadProvider;
 	private final EventBus eventBus;
+	private final boolean safeMode;
+	private final String title;
 
 	private final CardLayout cardLayout = new CardLayout();
 	private final Rectangle sidebarButtonPosition = new Rectangle();
@@ -150,7 +150,10 @@ public class ClientUI
 		@Nullable Applet client,
 		ConfigManager configManager,
 		Provider<ClientThread> clientThreadProvider,
-		EventBus eventBus)
+		EventBus eventBus,
+		@Named("safeMode") boolean safeMode,
+		@Named("runelite.title") String title
+	)
 	{
 		this.config = config;
 		this.keyManager = keyManager;
@@ -159,6 +162,8 @@ public class ClientUI
 		this.configManager = configManager;
 		this.clientThreadProvider = clientThreadProvider;
 		this.eventBus = eventBus;
+		this.safeMode = safeMode;
+		this.title = title;
 	}
 
 	@Subscribe
@@ -291,7 +296,7 @@ public class ClientUI
 				return false;
 			}
 
-			frame.setTitle(RuneLiteProperties.getTitle() + " - " + name);
+			frame.setTitle(title + " - " + name);
 			return true;
 		});
 	}
@@ -318,7 +323,7 @@ public class ClientUI
 			// Try to enable fullscreen on OSX
 			OSXUtil.tryEnableFullscreen(frame);
 
-			frame.setTitle(RuneLiteProperties.getTitle());
+			frame.setTitle(title);
 			frame.setIconImage(ICON);
 			frame.getLayeredPane().setCursor(Cursor.getDefaultCursor()); // Prevent substance from using a resize cursor for pointing
 			frame.setLocationRelativeTo(frame.getOwner());
@@ -469,7 +474,7 @@ public class ClientUI
 
 			// Create hide sidebar button
 
-			sidebarOpenIcon = ImageUtil.getResourceStreamFromClass(ClientUI.class, withTitleBar ? "open.png" : "open_rs.png");
+			sidebarOpenIcon = ImageUtil.loadImageResource(ClientUI.class, withTitleBar ? "open.png" : "open_rs.png");
 			sidebarClosedIcon = ImageUtil.flipImage(sidebarOpenIcon, true, false);
 
 			sidebarNavigationButton = NavigationButton
@@ -504,10 +509,10 @@ public class ClientUI
 			frame.revalidateMinimumSize();
 
 			// Create tray icon (needs to be created after frame is packed)
-			trayIcon = SwingUtil.createTrayIcon(ICON, RuneLiteProperties.getTitle(), frame);
+			trayIcon = SwingUtil.createTrayIcon(ICON, title, frame);
 
 			// Move frame around (needs to be done after frame is packed)
-			if (config.rememberScreenBounds())
+			if (config.rememberScreenBounds() && !safeMode)
 			{
 				try
 				{
@@ -518,8 +523,8 @@ public class ClientUI
 						frame.setBounds(clientBounds);
 
 						// frame.getGraphicsConfiguration().getBounds() returns the bounds for the primary display.
-						// We have to find the correct graphics configuration by using the intersection of the client boundaries.
-						GraphicsConfiguration gc = getIntersectingDisplay(clientBounds);
+						// We have to find the correct graphics configuration by using the client boundaries.
+						GraphicsConfiguration gc = findDisplayFromBounds(clientBounds);
 						if (gc != null)
 						{
 							double scale = gc.getDefaultTransform().getScaleX();
@@ -568,7 +573,6 @@ public class ClientUI
 			frame.setVisible(true);
 			frame.toFront();
 			requestFocus();
-			giveClientFocus();
 			log.info("Showing frame {}", frame);
 			frame.revalidateMinimumSize();
 		});
@@ -583,7 +587,7 @@ public class ClientUI
 		}
 	}
 
-	private GraphicsConfiguration getIntersectingDisplay(final Rectangle bounds)
+	private GraphicsConfiguration findDisplayFromBounds(final Rectangle bounds)
 	{
 		GraphicsDevice[] gds = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
 
@@ -592,7 +596,7 @@ public class ClientUI
 			GraphicsConfiguration gc = gd.getDefaultConfiguration();
 
 			final Rectangle displayBounds = gc.getBounds();
-			if (displayBounds.intersects(bounds))
+			if (displayBounds.contains(bounds))
 			{
 				return gc;
 			}
@@ -1032,12 +1036,12 @@ public class ClientUI
 
 			if (player != null && player.getName() != null)
 			{
-				frame.setTitle(RuneLiteProperties.getTitle() + " - " + player.getName());
+				frame.setTitle(title + " - " + player.getName());
 			}
 		}
 		else
 		{
-			frame.setTitle(RuneLiteProperties.getTitle());
+			frame.setTitle(title);
 		}
 
 		if (frame.isAlwaysOnTopSupported())

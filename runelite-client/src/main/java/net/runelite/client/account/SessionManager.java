@@ -27,9 +27,12 @@ package net.runelite.client.account;
 import com.google.gson.Gson;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.UUID;
 import javax.inject.Inject;
@@ -61,6 +64,7 @@ public class SessionManager
 	private final WSClient wsClient;
 	private final File sessionFile;
 	private final AccountClient accountClient;
+	private final Gson gson;
 
 	@Inject
 	private SessionManager(
@@ -68,13 +72,15 @@ public class SessionManager
 		ConfigManager configManager,
 		EventBus eventBus,
 		WSClient wsClient,
-		OkHttpClient okHttpClient)
+		OkHttpClient okHttpClient,
+		Gson gson)
 	{
 		this.configManager = configManager;
 		this.eventBus = eventBus;
 		this.wsClient = wsClient;
 		this.sessionFile = sessionfile;
 		this.accountClient = new AccountClient(okHttpClient);
+		this.gson = gson;
 
 		eventBus.register(this);
 	}
@@ -91,7 +97,7 @@ public class SessionManager
 
 		try (FileInputStream in = new FileInputStream(sessionFile))
 		{
-			session = new Gson().fromJson(new InputStreamReader(in), AccountSession.class);
+			session = gson.fromJson(new InputStreamReader(in, StandardCharsets.UTF_8), AccountSession.class);
 
 			log.debug("Loaded session for {}", session.getUsername());
 		}
@@ -119,9 +125,9 @@ public class SessionManager
 			return;
 		}
 
-		try (FileWriter fw = new FileWriter(sessionFile))
+		try (Writer fw = new OutputStreamWriter(new FileOutputStream(sessionFile), StandardCharsets.UTF_8))
 		{
-			new Gson().toJson(accountSession, fw);
+			gson.toJson(accountSession, fw);
 
 			log.debug("Saved session to {}", sessionFile);
 		}

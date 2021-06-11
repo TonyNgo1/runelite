@@ -24,10 +24,12 @@
  */
 package net.runelite.http.api.config;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import lombok.AllArgsConstructor;
@@ -47,6 +49,7 @@ import okhttp3.Response;
 public class ConfigClient
 {
 	private static final MediaType TEXT_PLAIN = MediaType.parse("text/plain");
+	private static final Gson GSON = RuneLiteAPI.GSON;
 
 	private final OkHttpClient client;
 	private final UUID uuid;
@@ -67,7 +70,7 @@ public class ConfigClient
 		try (Response response = client.newCall(request).execute())
 		{
 			InputStream in = response.body().byteStream();
-			return RuneLiteAPI.GSON.fromJson(new InputStreamReader(in), Configuration.class);
+			return RuneLiteAPI.GSON.fromJson(new InputStreamReader(in, StandardCharsets.UTF_8), Configuration.class);
 		}
 		catch (JsonParseException ex)
 		{
@@ -106,6 +109,59 @@ public class ConfigClient
 			{
 				response.close();
 				log.debug("Synchronized configuration value '{}' to '{}'", key, value);
+				future.complete(null);
+			}
+		});
+
+		return future;
+	}
+
+	public CompletableFuture<Void> patch(Configuration configuration)
+	{
+		CompletableFuture<Void> future = new CompletableFuture<>();
+
+		HttpUrl url = RuneLiteAPI.getApiBase().newBuilder()
+			.addPathSegment("config")
+			.build();
+
+		log.debug("Built URI: {}", url);
+
+		Request request = new Request.Builder()
+			.patch(RequestBody.create(RuneLiteAPI.JSON, GSON.toJson(configuration)))
+			.header(RuneLiteAPI.RUNELITE_AUTH, uuid.toString())
+			.url(url)
+			.build();
+
+		client.newCall(request).enqueue(new Callback()
+		{
+			@Override
+			public void onFailure(Call call, IOException e)
+			{
+				log.warn("Unable to synchronize configuration item", e);
+				future.completeExceptionally(e);
+			}
+
+			@Override
+			public void onResponse(Call call, Response response)
+			{
+				if (response.code() != 200)
+				{
+					String body = "bad response";
+					try
+					{
+						body = response.body().string();
+					}
+					catch (IOException ignored)
+					{
+					}
+
+					log.warn("failed to synchronize some of {} configuration values: {}", configuration.getConfig().size(), body);
+				}
+				else
+				{
+					log.debug("Synchronized {} configuration values", configuration.getConfig().size());
+				}
+				response.close();
 				future.complete(null);
 			}
 		});
